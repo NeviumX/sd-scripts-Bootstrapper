@@ -1,0 +1,85 @@
+# Model paths
+pretrained_model_name_or_path = ""
+vae = ""
+tokenizer_cache_dir = ""
+max_token_length = ""
+disable_mmap_load_safetensors = ""
+
+# Dataset
+train_data_dir = ""
+resolution = ""
+caption_extension = ""
+caption_separator = ""
+shuffle_caption = ""
+keep_tokens = ""
+enable_bucket = ""
+bucket_no_upscale = ""
+bucket_reso_steps = ""
+min_bucket_reso = ""
+max_bucket_reso = ""
+train_batch_size = ""
+prior_loss_weight = ""
+train_inpainting = ""
+
+# Output
+output_dir = ""
+output_name = ""
+save_model_as = ""
+save_precision = ""
+save_every_n_epochs = ""
+save_every_n_steps = ""
+wandb_run_name = ""
+
+# Network
+network_module = ""
+network_weights = ""
+network_dim = ""
+network_alpha = ""
+network_dropout = ""
+network_train_unet_only = ""
+network_train_text_encoder_only = ""
+network_args = []
+
+# Optimizer and LR schedule
+learning_rate = ""
+unet_lr = ""
+text_encoder_lr = []
+optimizer_type = ""
+optimizer_args = []
+max_grad_norm = ""
+lr_scheduler = ""
+lr_scheduler_args = []
+lr_scheduler_num_cycles = ""
+lr_scheduler_power = ""
+lr_warmup_steps = ""
+
+# Training length
+max_train_epochs = ""
+max_train_steps = ""
+gradient_accumulation_steps = ""
+gradient_checkpointing = ""
+max_data_loader_n_workers = ""
+seed = ""
+
+# Precision and memory
+mixed_precision = ""
+full_bf16 = ""
+full_fp16 = ""
+cache_latents = ""
+cache_latents_to_disk = ""
+vae_batch_size = ""
+cache_text_encoder_outputs = ""
+cache_text_encoder_outputs_to_disk = ""
+
+# Attention
+xformers = ""
+sdpa = ""
+mem_eff_attn = ""
+
+# Loss and timestep range
+loss_type = ""
+huber_c = ""
+huber_scale = ""
+huber_schedule = ""
+min_timestep = ""
+max_timestep = ""

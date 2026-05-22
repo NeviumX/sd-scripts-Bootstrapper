@@ -9,4 +9,5 @@ logs/
 outputs/
 wandb/
 training_settings/**/*.toml
+!training_settings/**/*.template.toml
 uv.lock

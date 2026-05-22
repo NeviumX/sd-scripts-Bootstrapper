@@ -1,0 +1,77 @@
+# Model paths
+pretrained_model_name_or_path = ""
+qwen3 = ""
+vae = ""
+qwen3_max_token_length = ""
+t5_max_token_length = ""
+
+train_data_dir = ""
+resolution = ""
+caption_extension = ""
+enable_bucket = ""
+bucket_no_upscale = ""
+bucket_reso_steps = ""
+min_bucket_reso = ""
+max_bucket_reso = ""
+train_batch_size = ""
+prior_loss_weight = ""
+shuffle_caption = ""
+keep_tokens = ""
+
+# Output
+output_dir = ""
+output_name = ""
+save_model_as = ""
+save_precision = ""
+save_every_n_epochs = ""
+wandb_run_name = ""
+
+# LoKR network
+network_module = ""
+network_dim = ""
+network_alpha = ""
+network_train_unet_only = ""
+network_args = []
+
+# Optimizer and LR schedule
+learning_rate = ""
+optimizer_type = ""
+optimizer_args = []
+max_grad_norm = ""
+lr_scheduler = ""
+lr_scheduler_args = []
+lr_scheduler_num_cycles = ""
+lr_scheduler_power = ""
+lr_warmup_steps = ""
+
+# Training length
+max_train_epochs = ""
+gradient_accumulation_steps = ""
+gradient_checkpointing = ""
+max_data_loader_n_workers = ""
+seed = ""
+
+# Precision and memory
+mixed_precision = ""
+cache_latents = ""
+cache_text_encoder_outputs = ""
+vae_chunk_size = ""
+vae_disable_cache = ""
+
+# Attention
+attn_mode = ""
+split_attn = ""
+
+# Anima / flow matching
+timestep_sampling = ""
+sigmoid_scale = ""
+discrete_flow_shift = ""
+weighting_scheme = ""
+
+# Loss
+loss_type = ""
+huber_c = ""
+huber_scale = ""
+huber_schedule = ""
+min_timestep = ""
+max_timestep = ""
