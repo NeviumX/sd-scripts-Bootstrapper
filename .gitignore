@@ -1,0 +1,12 @@
+sd-scripts/
+.venv/
+.venv.invalid-*/
+.uv-cache/
+.uv-python/
+__pycache__/
+*.pyc
+logs/
+outputs/
+wandb/
+training_settings/**/*.toml
+uv.lock
