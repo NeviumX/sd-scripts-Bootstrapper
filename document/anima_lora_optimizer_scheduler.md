@@ -115,6 +115,7 @@ custom optimizer / scheduler 用の runtime には、以下の package が含ま
 - `pytorch-optimizer==3.10.0`
 - `schedulefree==1.4.1`
 - `torchao==0.13.0`
+- `triton-windows>=3.3,<3.4` (Windows)
 
 LoRA Easy UI の短縮名変換層は含まれません。そのため、
 `optimizer_type = "FFTDescent"` のような短縮名ではなく、full import path を指定します。
@@ -122,7 +123,7 @@ full import path は大文字小文字も含めて正確に書く必要があり
 
 ```toml
 optimizer_type = "LoraEasyCustomOptimizer.fftdescent.FFTDescent"
-optimizer_args = ["weight_decay=0.04", "spectral_clip_compile=False"]
+optimizer_args = ["weight_decay=0.04", "spectral_clip_compile=True"]
 
 lr_scheduler_type = "LoraEasyCustomOptimizer.RexAnnealingWarmRestarts.RexAnnealingWarmRestarts"
 lr_scheduler_args = ["first_cycle_max_steps=702", "min_lr=0.0", "gamma=0.9", "d=0.9"]
@@ -279,7 +280,7 @@ optimizer_args = ["weight_decay=0.01", "betas=(0.9,0.999)"]
 - `Adafactor` で `relative_step=False` にする場合、`lr_scheduler = "constant_with_warmup"` と `max_grad_norm = 0.0` が推奨されています。
 - `RAdamScheduleFree`, `AdamWScheduleFree`, `SGDScheduleFree` 使用時は dummy scheduler が返されるため、通常の `lr_scheduler` 指定は実質使われません。
 - `fused_backward_pass` はコード上 `Adafactor` のみ許可されます。ただし Anima guide では主に VRAM 削減用の高度設定として扱われています。
-- `FFTDescent` の `spectral_clip_compile=True` は `torch.compile` 経由で Triton を必要とします。Triton が使えない Windows 環境では、`optimizer_args` に `spectral_clip_compile=False` を指定すると spectral clipping 自体は維持したまま未コンパイル実行になります。
+- `FFTDescent` の `spectral_clip_compile=True` は `torch.compile` 経由で Triton を使います。このプロジェクトでは Windows 用に `triton-windows>=3.3,<3.4` を入れるため、PyTorch 2.7 / CUDA 12.8 / RTX 50 系では compiled spectral clipping を利用できます。Triton が使えない環境では、`optimizer_args` に `spectral_clip_compile=False` を指定すると spectral clipping 自体は維持したまま未コンパイル実行になります。
 
 ## Scheduler: `lr_scheduler` に指定できる値
 
@@ -405,7 +406,7 @@ LoRA Easy FFTDescent + Rex scheduler:
 
 ```toml
 optimizer_type = "LoraEasyCustomOptimizer.fftdescent.FFTDescent"
-optimizer_args = ["weight_decay=0.04", "spectral_clip_compile=False"]
+optimizer_args = ["weight_decay=0.04", "spectral_clip_compile=True"]
 lr_scheduler_type = "LoraEasyCustomOptimizer.RexAnnealingWarmRestarts.RexAnnealingWarmRestarts"
 lr_scheduler_args = ["first_cycle_max_steps=702", "min_lr=0.0", "gamma=0.9", "d=0.9"]
 lr_scheduler = "rex_annealing_warm_restarts_(RAWR)"

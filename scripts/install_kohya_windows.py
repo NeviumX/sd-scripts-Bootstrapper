@@ -23,6 +23,7 @@ KEY_PACKAGES = (
     "lion-pytorch",
     "pytorch-optimizer",
     "torchao",
+    "triton-windows",
     "adv-optm",
     "safetensors",
     "prodigy-plus-schedule-free",

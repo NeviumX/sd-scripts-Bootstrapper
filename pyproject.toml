@@ -47,6 +47,7 @@ dependencies = [
     "torchao==0.13.0",
     "torch==2.7.0+cu128",
     "torchvision==0.22.0+cu128",
+    "triton-windows>=3.3,<3.4; sys_platform == 'win32'",
     "transformers==4.54.1",
     "voluptuous==0.13.1",
     "wandb==0.18.0",

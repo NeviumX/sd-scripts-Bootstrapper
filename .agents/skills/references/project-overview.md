@@ -74,6 +74,9 @@ The runtime also includes LoRA Easy custom optimizer support through
 dependencies, including `adv-optm==2.2.3`, `bitsandbytes==0.49.2`,
 `lion-pytorch==0.2.4`, `prodigy-plus-schedule-free==2.0.1`,
 `pytorch-optimizer==3.10.0`, `schedulefree==1.4.1`, and `torchao==0.13.0`.
+On Windows, `triton-windows>=3.3,<3.4` is included to match PyTorch 2.7 and
+enable CUDA `torch.compile` paths such as FFTDescent compiled spectral
+clipping.
 
 ## Setup Flow
 
@@ -179,7 +182,8 @@ lr_scheduler_num_cycles`. Explicit `warmup_steps=...` values in
 `lr_scheduler_args` are preserved. For `FFTDescent`, if Triton is not importable
 and `spectral_clip_compile` is not explicitly set, the prepared config adds
 `spectral_clip_compile=False` so spectral clipping can run without
-`torch.compile`.
+`torch.compile`. In the intended Windows runtime, `triton-windows` is installed
+so explicit `spectral_clip_compile=True` can be used.
 
 ## Output Safety
 
@@ -344,6 +348,8 @@ support も含まれます。関連 package として `adv-optm==2.2.3`,
 `bitsandbytes==0.49.2`, `lion-pytorch==0.2.4`,
 `prodigy-plus-schedule-free==2.0.1`, `pytorch-optimizer==3.10.0`,
 `schedulefree==1.4.1`, `torchao==0.13.0` が project dependencies に固定されています。
+Windows では PyTorch 2.7 に合わせて `triton-windows>=3.3,<3.4` も含め、
+FFTDescent の compiled spectral clipping など CUDA `torch.compile` 経路を使えるようにします。
 
 ## セットアップフロー
 
@@ -446,7 +452,8 @@ warm-restart scheduler では、TOML の `first_cycle_max_steps` 明示値を優
 優先します。`FFTDescent` では、Triton を import できず、かつ
 `spectral_clip_compile` が明示されていない場合、準備済み config に
 `spectral_clip_compile=False` を追加し、spectral clipping を `torch.compile` なしで
-実行できるようにします。
+実行できるようにします。想定される Windows runtime では `triton-windows` を install するため、
+明示的に `spectral_clip_compile=True` を指定して compiled spectral clipping を使えます。
 
 ## 出力の安全確認
 

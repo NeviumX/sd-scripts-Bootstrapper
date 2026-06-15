@@ -2,5 +2,6 @@ bitsandbytes==0.49.2
 tensorboard==2.19.0
 tensorflow==2.19.0
 onnxruntime-gpu==1.19.2
+triton-windows>=3.3,<3.4
 
 -r requirements.txt
