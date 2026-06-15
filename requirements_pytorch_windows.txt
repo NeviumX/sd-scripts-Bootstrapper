@@ -1,8 +1,8 @@
 --extra-index-url https://download.pytorch.org/whl/cu128
 -c requirements_windows_lock.txt
 
-torch==2.7.0+cu128
-torchvision==0.22.0+cu128
-xformers==0.0.30
+torch==2.7.1+cu128
+torchvision==0.22.1+cu128
+xformers==0.0.31.post1
 
 -r requirements_windows.txt

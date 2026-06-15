@@ -16,6 +16,7 @@ MAX_PYTHON = (3, 12, 0)
 KEY_PACKAGES = (
     "torch",
     "torchvision",
+    "flash-attn",
     "xformers",
     "accelerate",
     "diffusers",
@@ -31,6 +32,13 @@ KEY_PACKAGES = (
     "LoraEasyCustomOptimizer",
     "voluptuous",
 )
+
+FLASH_ATTN_WHEELS = {
+    ("win32", 11): (
+        "https://github.com/sdbds/flash-attention-for-windows/releases/download/2.8.0.post2/"
+        "flash_attn-2.8.0.post2+cu128torch2.7.1cxx11abiFALSEfullbackward-cp311-cp311-win_amd64.whl"
+    ),
+}
 
 
 def log(message: str) -> None:
@@ -157,6 +165,32 @@ def install_requirements(project_root: Path, requirements_file: Path) -> None:
     )
 
 
+def install_flash_attn(project_root: Path) -> None:
+    if sys.platform != "win32":
+        log("Skipping flash-attn wheel install: only the Windows prebuilt wheel is configured.")
+        return
+
+    python_minor = sys.version_info.minor
+    wheel_url = FLASH_ATTN_WHEELS.get((sys.platform, python_minor))
+    if wheel_url is None:
+        fail(f"No flash-attn Windows wheel is configured for Python 3.{python_minor}")
+
+    run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--progress-bar",
+            "on",
+            "--upgrade",
+            "--no-deps",
+            wheel_url,
+        ],
+        cwd=project_root,
+    )
+
+
 def install_editable_project(project_root: Path, package_dir: Path, label: str) -> None:
     if not package_dir.exists():
         fail(f"{label} directory does not exist: {package_dir}")
@@ -248,6 +282,7 @@ def main() -> None:
     ensure_pip()
 
     install_requirements(project_root, requirements_file)
+    install_flash_attn(project_root)
     install_editable_project(
         project_root,
         project_root / "third_party" / "custom_scheduler",

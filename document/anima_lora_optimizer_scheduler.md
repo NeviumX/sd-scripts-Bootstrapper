@@ -116,6 +116,7 @@ custom optimizer / scheduler 用の runtime には、以下の package が含ま
 - `schedulefree==1.4.1`
 - `torchao==0.13.0`
 - `triton-windows>=3.3,<3.4` (Windows)
+- `flash-attn==2.8.0.post2` (Windows prebuilt wheel, Python 3.11 / torch 2.7.1 / CUDA 12.8)
 
 LoRA Easy UI の短縮名変換層は含まれません。そのため、
 `optimizer_type = "FFTDescent"` のような短縮名ではなく、full import path を指定します。

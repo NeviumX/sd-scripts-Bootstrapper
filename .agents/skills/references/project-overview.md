@@ -66,8 +66,11 @@ The intended runtime is repository-local:
   `tool.uv.sources.library = { path = "sd-scripts" }` in `pyproject.toml`.
 
 The dependency set in `pyproject.toml` pins the important ML stack, including
-`torch==2.7.0+cu128`, `torchvision==0.22.0+cu128`, and `xformers==0.0.30`,
-using the explicit `pytorch-cu128` index.
+`torch==2.7.1+cu128`, `torchvision==0.22.1+cu128`, and
+`xformers==0.0.31.post1`, using the explicit `pytorch-cu128` index.
+On Windows, the installer explicitly installs the prebuilt `flash-attn`
+`2.8.0.post2` wheel for Python 3.11 / torch 2.7.1 / CUDA 12.8 from
+`sdbds/flash-attention-for-windows`.
 
 The runtime also includes LoRA Easy custom optimizer support through
 `third_party/custom_scheduler`. Supporting packages are pinned with the project
@@ -340,8 +343,11 @@ Python 環境、uv キャッシュ、uv 管理の Python、clone された `sd-s
   として扱われる。
 
 `pyproject.toml` の依存関係は主要な ML stack を固定しています。
-特に `torch==2.7.0+cu128`, `torchvision==0.22.0+cu128`,
-`xformers==0.0.30` は明示的な `pytorch-cu128` index を使います。
+特に `torch==2.7.1+cu128`, `torchvision==0.22.1+cu128`,
+`xformers==0.0.31.post1` は明示的な `pytorch-cu128` index を使います。
+Windows では installer が `sdbds/flash-attention-for-windows` から
+Python 3.11 / torch 2.7.1 / CUDA 12.8 向けの prebuilt `flash-attn`
+`2.8.0.post2` wheel を明示的に install します。
 
 runtime には `third_party/custom_scheduler` 経由の LoRA Easy custom optimizer
 support も含まれます。関連 package として `adv-optm==2.2.3`,
