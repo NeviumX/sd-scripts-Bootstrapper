@@ -1,5 +1,8 @@
 $ErrorActionPreference = "Stop"
 
+$DefaultCustomOptimizerUrl = "https://github.com/67372a/LoRA_Easy_Training_scripts_Backend.git"
+$DefaultCustomOptimizerBranch = "refresh"
+
 function Write-Step {
     param([Parameter(Mandatory = $true)][string]$Message)
     Write-Host ""
@@ -253,6 +256,7 @@ function Test-PythonEnvironmentInstalled {
 
     $probe = @"
 import importlib.metadata as metadata
+import importlib.util
 
 required = {
     "accelerate": "1.8.1",
@@ -268,6 +272,16 @@ required = {
     "xformers": "0.0.31.post1",
 }
 
+required_modules = {
+    "flash_attn": "flash-attn",
+    "library": "library",
+    "LoraEasyCustomOptimizer": "LoraEasyCustomOptimizer",
+    "torch": "torch",
+    "torchvision": "torchvision",
+    "triton": "triton-windows",
+    "xformers": "xformers",
+}
+
 missing_or_mismatched = []
 for package, expected_version in required.items():
     try:
@@ -278,6 +292,10 @@ for package, expected_version in required.items():
 
     if installed_version != expected_version:
         missing_or_mismatched.append(f"{package}: {installed_version} != {expected_version}")
+
+for module_name, package in required_modules.items():
+    if importlib.util.find_spec(module_name) is None:
+        missing_or_mismatched.append(f"{package}: module {module_name} not importable")
 
 raise SystemExit(1 if missing_or_mismatched else 0)
 "@
@@ -304,6 +322,118 @@ function Test-PythonInstallerRuntime {
 function Get-SdScriptsDir {
     param([Parameter(Mandatory = $true)][string]$ProjectRoot)
     return (Join-Path $ProjectRoot "sd-scripts")
+}
+
+function Get-CustomOptimizerDir {
+    param([Parameter(Mandatory = $true)][string]$ProjectRoot)
+    return (Join-Path $ProjectRoot "third_party\custom_scheduler")
+}
+
+function Move-CustomOptimizerDirAside {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$CustomOptimizerDir,
+        [Parameter(Mandatory = $true)][string]$Reason
+    )
+
+    if (-not (Test-Path -LiteralPath $CustomOptimizerDir)) {
+        return
+    }
+
+    $rootFullPath = [System.IO.Path]::GetFullPath($ProjectRoot).TrimEnd('\', '/')
+    $sourceFullPath = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $CustomOptimizerDir).Path)
+    if (-not $sourceFullPath.StartsWith($rootFullPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to move custom optimizer directory outside project root: $sourceFullPath"
+    }
+
+    $timestamp = Get-Date -Format "yyyyMMdd-HHmmss"
+    $backupDir = Join-Path (Split-Path -Parent $CustomOptimizerDir) "custom_scheduler.legacy-$timestamp"
+    $backupFullPath = [System.IO.Path]::GetFullPath($backupDir)
+    if (-not $backupFullPath.StartsWith($rootFullPath, [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to move custom optimizer backup outside project root: $backupFullPath"
+    }
+
+    Write-Warning "Custom optimizer directory $Reason Moving it to: $backupDir"
+    Move-Item -LiteralPath $CustomOptimizerDir -Destination $backupDir
+}
+
+function Update-CustomOptimizerRepo {
+    param(
+        [Parameter(Mandatory = $true)][string]$CustomOptimizerDir,
+        [string]$Branch = $DefaultCustomOptimizerBranch
+    )
+
+    if (-not (Test-Path -LiteralPath (Join-Path $CustomOptimizerDir ".git"))) {
+        throw "Custom optimizer source exists but is not a git repository: $CustomOptimizerDir"
+    }
+
+    $gitRepoArgs = @("-c", "safe.directory=$CustomOptimizerDir", "-C", $CustomOptimizerDir)
+
+    Write-Step "Fetching LoRA Easy custom optimizer updates"
+    Invoke-NativeCommand -FilePath "git" -ArgumentList ($gitRepoArgs + @("fetch", "--tags", "--prune")) -FailureMessage "git fetch failed for LoRA Easy custom optimizer."
+
+    $branchExists = $false
+    & git @gitRepoArgs rev-parse --verify --quiet "refs/heads/$Branch" *> $null
+    if ($LASTEXITCODE -eq 0) {
+        $branchExists = $true
+    }
+
+    $currentBranch = (& git @gitRepoArgs branch --show-current).Trim()
+    if ($LASTEXITCODE -ne 0) {
+        throw "Could not determine the current custom optimizer branch."
+    }
+
+    if ($currentBranch -ne $Branch) {
+        if ($branchExists) {
+            Invoke-NativeCommand -FilePath "git" -ArgumentList ($gitRepoArgs + @("checkout", $Branch)) -FailureMessage "git checkout failed for LoRA Easy custom optimizer."
+        } else {
+            Invoke-NativeCommand -FilePath "git" -ArgumentList ($gitRepoArgs + @("checkout", "-b", $Branch, "origin/$Branch")) -FailureMessage "git checkout failed for LoRA Easy custom optimizer."
+        }
+    }
+
+    Invoke-NativeCommand -FilePath "git" -ArgumentList ($gitRepoArgs + @("sparse-checkout", "set", "custom_scheduler")) -FailureMessage "git sparse-checkout failed for LoRA Easy custom optimizer."
+    Invoke-NativeCommand -FilePath "git" -ArgumentList ($gitRepoArgs + @("merge", "--ff-only", "origin/$Branch")) -FailureMessage "git merge --ff-only failed for LoRA Easy custom optimizer. Resolve local changes or branch divergence, then run again."
+}
+
+function Ensure-CustomOptimizerRepo {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [string]$RepoUrl = $DefaultCustomOptimizerUrl,
+        [string]$Branch = $DefaultCustomOptimizerBranch
+    )
+
+    $customOptimizerDir = Get-CustomOptimizerDir -ProjectRoot $ProjectRoot
+    $thirdPartyDir = Split-Path -Parent $customOptimizerDir
+    New-Item -ItemType Directory -Path $thirdPartyDir -Force | Out-Null
+
+    if (-not (Test-Path -LiteralPath $customOptimizerDir)) {
+        Write-Step "Cloning LoRA Easy custom optimizer"
+        Invoke-NativeCommand -FilePath "git" -ArgumentList @(
+            "clone",
+            "--filter=blob:none",
+            "--no-checkout",
+            "--branch", $Branch,
+            $RepoUrl,
+            $customOptimizerDir
+        ) -FailureMessage "git clone failed for LoRA Easy custom optimizer."
+
+        $gitRepoArgs = @("-c", "safe.directory=$customOptimizerDir", "-C", $customOptimizerDir)
+        Invoke-NativeCommand -FilePath "git" -ArgumentList ($gitRepoArgs + @("sparse-checkout", "init", "--cone")) -FailureMessage "git sparse-checkout init failed for LoRA Easy custom optimizer."
+        Invoke-NativeCommand -FilePath "git" -ArgumentList ($gitRepoArgs + @("sparse-checkout", "set", "custom_scheduler")) -FailureMessage "git sparse-checkout set failed for LoRA Easy custom optimizer."
+        Invoke-NativeCommand -FilePath "git" -ArgumentList ($gitRepoArgs + @("checkout", $Branch)) -FailureMessage "git checkout failed for LoRA Easy custom optimizer."
+    } elseif (-not (Test-Path -LiteralPath (Join-Path $customOptimizerDir ".git"))) {
+        Move-CustomOptimizerDirAside -ProjectRoot $ProjectRoot -CustomOptimizerDir $customOptimizerDir -Reason "is not a git checkout."
+        return Ensure-CustomOptimizerRepo -ProjectRoot $ProjectRoot -RepoUrl $RepoUrl -Branch $Branch
+    } else {
+        Update-CustomOptimizerRepo -CustomOptimizerDir $customOptimizerDir -Branch $Branch
+    }
+
+    $packageDir = Join-Path $customOptimizerDir "custom_scheduler"
+    if (-not (Test-Path -LiteralPath (Join-Path $packageDir "setup.py"))) {
+        throw "LoRA Easy custom optimizer package was not found after update: $packageDir"
+    }
+
+    return $customOptimizerDir
 }
 
 function Update-SdScriptsRepo {
@@ -802,8 +932,14 @@ function Start-SdScriptsTraining {
         if (-not (Test-Path -LiteralPath (Join-Path $sdScriptsDir ".git"))) {
             throw "sd-scripts is not installed. Run setup-uv.bat first, or run without -SkipUpdate."
         }
+
+        $customOptimizerDir = Get-CustomOptimizerDir -ProjectRoot $ProjectRoot
+        if (-not (Test-Path -LiteralPath (Join-Path $customOptimizerDir ".git"))) {
+            throw "LoRA Easy custom optimizer source is not installed. Run setup-uv.bat first, or run without -SkipUpdate."
+        }
     } else {
         $sdScriptsDir = Ensure-SdScriptsRepo -ProjectRoot $ProjectRoot -RepoUrl $SdScriptsUrl
+        $null = Ensure-CustomOptimizerRepo -ProjectRoot $ProjectRoot
     }
 
     $trainScriptName = Resolve-TrainingScriptName -SdScriptsDir $sdScriptsDir -TrainScriptNames $TrainScriptNames

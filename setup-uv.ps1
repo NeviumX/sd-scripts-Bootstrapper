@@ -15,6 +15,7 @@ Write-Host "Project: $ProjectRoot"
 
 Ensure-Git
 $sdScriptsDir = Ensure-SdScriptsRepo -ProjectRoot $ProjectRoot -RepoUrl $SdScriptsUrl
+$customOptimizerDir = Ensure-CustomOptimizerRepo -ProjectRoot $ProjectRoot
 
 if (-not $SkipSync) {
     $forceReinstall = $false
@@ -37,4 +38,5 @@ if (-not $SkipSync) {
 Write-Host ""
 Write-Host "Setup complete."
 Write-Host "sd-scripts: $sdScriptsDir"
+Write-Host "optimizer:  $customOptimizerDir"
 Write-Host "venv:       $(Join-Path $ProjectRoot '.venv')"

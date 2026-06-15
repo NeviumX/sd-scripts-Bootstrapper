@@ -216,6 +216,15 @@ def install_editable_project(project_root: Path, package_dir: Path, label: str) 
     )
 
 
+def custom_optimizer_package_dir(project_root: Path) -> Path:
+    cloned_package_dir = project_root / "third_party" / "custom_scheduler" / "custom_scheduler"
+    legacy_package_dir = project_root / "third_party" / "custom_scheduler"
+
+    if is_installable_python_project(cloned_package_dir):
+        return cloned_package_dir
+    return legacy_package_dir
+
+
 def configure_accelerate(project_root: Path) -> None:
     if os.name == "nt":
         accelerate = project_root / ".venv" / "Scripts" / "accelerate.exe"
@@ -285,7 +294,7 @@ def main() -> None:
     install_flash_attn(project_root)
     install_editable_project(
         project_root,
-        project_root / "third_party" / "custom_scheduler",
+        custom_optimizer_package_dir(project_root),
         "LoRA Easy custom optimizer",
     )
     if not args.skip_accelerate_config:
