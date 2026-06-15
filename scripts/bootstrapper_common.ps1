@@ -253,22 +253,33 @@ function Test-PythonEnvironmentInstalled {
 
     $probe = @"
 import importlib.metadata as metadata
-required = [
-    "accelerate",
-    "bitsandbytes",
-    "diffusers",
-    "library",
-    "torch",
-    "torchvision",
-    "xformers",
-]
-missing = []
-for package in required:
+
+required = {
+    "accelerate": "1.8.1",
+    "bitsandbytes": "0.49.2",
+    "diffusers": "0.32.2",
+    "flash-attn": "2.8.0.post2",
+    "library": "0.0.0",
+    "LoraEasyCustomOptimizer": "1.0.0",
+    "torch": "2.7.1+cu128",
+    "torchao": "0.13.0",
+    "torchvision": "0.22.1+cu128",
+    "triton-windows": "3.3.1.post21",
+    "xformers": "0.0.31.post1",
+}
+
+missing_or_mismatched = []
+for package, expected_version in required.items():
     try:
-        metadata.version(package)
+        installed_version = metadata.version(package)
     except metadata.PackageNotFoundError:
-        missing.append(package)
-raise SystemExit(1 if missing else 0)
+        missing_or_mismatched.append(f"{package}: missing")
+        continue
+
+    if installed_version != expected_version:
+        missing_or_mismatched.append(f"{package}: {installed_version} != {expected_version}")
+
+raise SystemExit(1 if missing_or_mismatched else 0)
 "@
 
     $exitCode = Invoke-NativeProbe -FilePath $pythonPath -ArgumentList @("-c", $probe)
@@ -502,6 +513,21 @@ function Invoke-PythonProjectInstall {
     Invoke-PythonInstallerScript -ProjectRoot $ProjectRoot -SdScriptsDir $SdScriptsDir
 
     Add-TorchLibraryToPath -ProjectRoot $ProjectRoot
+}
+
+function Ensure-PythonProjectDependencies {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [string]$SdScriptsDir = ""
+    )
+
+    if (Test-PythonEnvironmentInstalled -ProjectRoot $ProjectRoot) {
+        Write-Step "Python environment is already installed"
+        Add-TorchLibraryToPath -ProjectRoot $ProjectRoot
+        return
+    }
+
+    Invoke-PythonProjectInstall -ProjectRoot $ProjectRoot -SdScriptsDir $SdScriptsDir
 }
 
 function Resolve-ProjectPath {
@@ -785,7 +811,7 @@ function Start-SdScriptsTraining {
     Prepare-TrainingOutput -ConfigPath $resolvedConfigPath -WorkingDir $sdScriptsDir -ForceOverwrite:$ForceOverwrite
 
     if (-not $NoSync) {
-        Invoke-PythonProjectInstall -ProjectRoot $ProjectRoot -SdScriptsDir $sdScriptsDir
+        Ensure-PythonProjectDependencies -ProjectRoot $ProjectRoot -SdScriptsDir $sdScriptsDir
     }
 
     $pythonPath = Assert-ProjectPython -ProjectRoot $ProjectRoot

@@ -188,6 +188,11 @@ and `spectral_clip_compile` is not explicitly set, the prepared config adds
 `torch.compile`. In the intended Windows runtime, `triton-windows` is installed
 so explicit `spectral_clip_compile=True` can be used.
 
+Training launchers update the `sd-scripts` checkout by default, but they do not
+reinstall Python packages when the project `.venv` already has the expected
+runtime package versions. If the environment is missing or a pinned runtime
+package is mismatched, the launcher runs the installer before training.
+
 ## Output Safety
 
 Before training starts, `Prepare-TrainingOutput` reads these TOML scalar keys
@@ -460,6 +465,10 @@ warm-restart scheduler では、TOML の `first_cycle_max_steps` 明示値を優
 `spectral_clip_compile=False` を追加し、spectral clipping を `torch.compile` なしで
 実行できるようにします。想定される Windows runtime では `triton-windows` を install するため、
 明示的に `spectral_clip_compile=True` を指定して compiled spectral clipping を使えます。
+
+学習ランチャーはデフォルトで `sd-scripts` checkout を update しますが、project `.venv` に
+想定される runtime package versions が揃っている場合は Python packages を再 install しません。
+環境が存在しない、または pin された runtime package が不足・不一致の場合のみ、学習前に installer を実行します。
 
 ## 出力の安全確認
 
