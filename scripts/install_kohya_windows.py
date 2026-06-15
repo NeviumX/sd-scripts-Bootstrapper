@@ -22,8 +22,12 @@ KEY_PACKAGES = (
     "bitsandbytes",
     "lion-pytorch",
     "pytorch-optimizer",
+    "torchao",
+    "adv-optm",
     "safetensors",
     "prodigy-plus-schedule-free",
+    "schedulefree",
+    "LoraEasyCustomOptimizer",
     "voluptuous",
 )
 
@@ -152,6 +156,31 @@ def install_requirements(project_root: Path, requirements_file: Path) -> None:
     )
 
 
+def install_editable_project(project_root: Path, package_dir: Path, label: str) -> None:
+    if not package_dir.exists():
+        fail(f"{label} directory does not exist: {package_dir}")
+    if not is_installable_python_project(package_dir):
+        fail(
+            f"{label} does not look installable: "
+            f"{package_dir} (expected pyproject.toml, setup.py, or setup.cfg)"
+        )
+
+    run(
+        [
+            sys.executable,
+            "-m",
+            "pip",
+            "install",
+            "--progress-bar",
+            "on",
+            "--upgrade",
+            "-e",
+            package_dir,
+        ],
+        cwd=project_root,
+    )
+
+
 def configure_accelerate(project_root: Path) -> None:
     if os.name == "nt":
         accelerate = project_root / ".venv" / "Scripts" / "accelerate.exe"
@@ -218,6 +247,11 @@ def main() -> None:
     ensure_pip()
 
     install_requirements(project_root, requirements_file)
+    install_editable_project(
+        project_root,
+        project_root / "third_party" / "custom_scheduler",
+        "LoRA Easy custom optimizer",
+    )
     if not args.skip_accelerate_config:
         configure_accelerate(project_root)
 

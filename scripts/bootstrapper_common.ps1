@@ -696,6 +696,49 @@ function Prepare-TrainingOutput {
     Write-Host "Output directory: $resolvedOutputDir"
 }
 
+function New-PreparedTrainingConfig {
+    param(
+        [Parameter(Mandatory = $true)][string]$ProjectRoot,
+        [Parameter(Mandatory = $true)][string]$SdScriptsDir,
+        [Parameter(Mandatory = $true)][string]$ConfigPath,
+        [Parameter(Mandatory = $true)][string]$TrainScriptName,
+        [Parameter(Mandatory = $true)][string]$PythonPath
+    )
+
+    $prepareScriptPath = Join-Path $ProjectRoot "scripts\prepare_training_config.py"
+    if (-not (Test-Path -LiteralPath $prepareScriptPath)) {
+        throw "Training config preparation script was not found: $prepareScriptPath"
+    }
+
+    $generatedConfigDir = Join-Path $ProjectRoot "logs\generated_configs"
+    New-Item -ItemType Directory -Path $generatedConfigDir -Force | Out-Null
+
+    $configStem = [System.IO.Path]::GetFileNameWithoutExtension($ConfigPath)
+    $trainScriptStem = [System.IO.Path]::GetFileNameWithoutExtension($TrainScriptName)
+    $generatedConfigPath = Join-Path $generatedConfigDir "$configStem.$trainScriptStem.prepared.toml"
+
+    Write-Step "Preparing training config"
+    Invoke-NativeCommand `
+        -FilePath $PythonPath `
+        -ArgumentList @(
+            $prepareScriptPath,
+            "--project-root", $ProjectRoot,
+            "--sd-scripts-dir", $SdScriptsDir,
+            "--train-script", $TrainScriptName,
+            "--config-file", $ConfigPath,
+            "--output-config", $generatedConfigPath,
+            "--num-processes", "1"
+        ) `
+        -WorkingDirectory $ProjectRoot `
+        -FailureMessage "Training config preparation failed."
+
+    if (-not (Test-Path -LiteralPath $generatedConfigPath)) {
+        throw "Prepared training config was not created: $generatedConfigPath"
+    }
+
+    return (Resolve-Path -LiteralPath $generatedConfigPath).Path
+}
+
 function Resolve-TrainingScriptName {
     param(
         [Parameter(Mandatory = $true)][string]$SdScriptsDir,
@@ -747,13 +790,19 @@ function Start-SdScriptsTraining {
 
     $pythonPath = Assert-ProjectPython -ProjectRoot $ProjectRoot
     Add-TorchLibraryToPath -ProjectRoot $ProjectRoot
+    $preparedConfigPath = New-PreparedTrainingConfig `
+        -ProjectRoot $ProjectRoot `
+        -SdScriptsDir $sdScriptsDir `
+        -ConfigPath $resolvedConfigPath `
+        -TrainScriptName $trainScriptName `
+        -PythonPath $pythonPath
 
     $trainingArgs = @(
         "-m",
         "accelerate.commands.launch",
         "--num_cpu_threads_per_process", "1",
         $trainScriptName,
-        "--config_file", $resolvedConfigPath
+        "--config_file", $preparedConfigPath
     )
 
     if ($ExtraArgs.Count -gt 0) {
@@ -766,7 +815,8 @@ function Start-SdScriptsTraining {
     Write-Host "sd-scripts: $sdScriptsDir"
     Write-Host "Python:     $pythonPath"
     Write-Host "Script:     $trainScriptName"
-    Write-Host "Config:     $resolvedConfigPath"
+    Write-Host "Source:     $resolvedConfigPath"
+    Write-Host "Config:     $preparedConfigPath"
     Write-Host ""
 
     if ([string]::IsNullOrWhiteSpace($env:PYTHONIOENCODING)) {
