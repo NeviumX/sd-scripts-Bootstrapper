@@ -26,7 +26,7 @@ save_precision = ""
 save_every_n_epochs = ""
 wandb_run_name = ""
 
-# LoKR network
+# Network
 network_module = ""
 network_dim = ""
 network_alpha = ""

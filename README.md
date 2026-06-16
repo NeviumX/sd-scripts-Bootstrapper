@@ -1,6 +1,14 @@
 ## sd-scripts-bootstrapper
 
-sd-scripts one click installer for windows
+[sd-scripts](https://github.com/kohya-ss/sd-scripts) one click installer for windows
+
+### Requirements
+
+- Windows
+- [Git for Windows](https://git-scm.com/download/win)
+
+Python, uv, sd-scripts, and the custom optimizer checkout are prepared by the
+setup script.
 
 ### Custom Optimizer source
 
