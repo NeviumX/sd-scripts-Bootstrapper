@@ -2,11 +2,25 @@
 setlocal
 
 set "SCRIPT_DIR=%~dp0"
+set "PAUSE_AFTER_RUN="
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%start_training_sdxl.ps1" %*
+if "%~1"=="" (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%start_training_sdxl.ps1"
+) else if /i "%~x1"==".toml" (
+    set "PAUSE_AFTER_RUN=1"
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%start_training_sdxl.ps1" -ConfigPath "%~1"
+) else (
+    powershell -NoProfile -ExecutionPolicy Bypass -File "%SCRIPT_DIR%start_training_sdxl.ps1" %*
+)
 set "EXIT_CODE=%ERRORLEVEL%"
 
-IF /i "%comspec% /c %~0 " equ "%cmdcmdline:"=%" (
+if defined PAUSE_AFTER_RUN (
+    echo.
+    if not "%EXIT_CODE%"=="0" echo start_training_sdxl failed with exit code %EXIT_CODE%.
+    pause
+)
+
+IF not defined PAUSE_AFTER_RUN IF /i "%comspec% /c %~0 " equ "%cmdcmdline:"=%" (
     echo.
     if not "%EXIT_CODE%"=="0" echo start_training_sdxl failed with exit code %EXIT_CODE%.
     pause

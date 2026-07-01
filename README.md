@@ -30,3 +30,10 @@ or training launch, and `third_party/` is treated as local generated state.
 
 ### Start training
 ``` ./start_training_***.bat ```
+
+Double-click a launcher to use its default `training_setting.toml`, or drag and
+drop another `.toml` file onto the matching `start_training_***.bat` launcher to
+train with that config. Drag-and-drop launches keep the window open after the
+run finishes, including failures, so the result can be read. In TOML files,
+write Windows paths with forward slashes like `D:/datasets/...` or
+single-quoted strings like `'D:\datasets\...'`.
